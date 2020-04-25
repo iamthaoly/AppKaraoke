@@ -63,8 +63,9 @@ public class MainActivity extends AppCompatActivity {
             int thich = c.getInt(5);
             BaiHat baiHat = new BaiHat(ma, ten, casy, thich);
             adapterAll.add(baiHat);
-            c.close();
+
         }
+        c.close();
     }
 
     private void addControls() {
@@ -97,21 +98,16 @@ public class MainActivity extends AppCompatActivity {
             InputStream myInput = getAssets().open(DATABASE_NAME);
             String outFileName = getDatabasePath();
             File f = new File(getApplicationInfo().dataDir+DB_PATH_SUFFIX);
-            if(!f.exists())
-            {
-                f.mkdir();
-                OutputStream myOutput = new FileOutputStream(outFileName);
-                byte[] buffer = new byte[1024];
-                int length;
-                while((length = myInput.read(buffer)) > 0)
-                {
-                    myOutput.write(buffer, 0, length);
-                }
-                myOutput.flush();
-                myOutput.close();
-                myInput.close();
+            if(!f.exists()) f.mkdir();
+            OutputStream myOutput = new FileOutputStream(outFileName);
+            byte[] buffer = new byte[1024];
+            int length;
+            while ((length = myInput.read(buffer)) > 0) {
+                myOutput.write(buffer, 0, length);
             }
-
+            myOutput.flush();
+            myOutput.close();
+            myInput.close();
         }
         catch (Exception ex)
         {
