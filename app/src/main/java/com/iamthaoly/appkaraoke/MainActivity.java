@@ -6,8 +6,11 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.Adapter;
 import android.widget.ListView;
+import android.widget.SearchView;
 import android.widget.TabHost;
 
 import com.iamthaoly.adapter.BaiHatAdapter;
@@ -24,7 +27,9 @@ public class MainActivity extends AppCompatActivity {
     public static String TableName = "ArirangSongList";
     String DB_PATH_SUFFIX = "/databases/";
     ListView lvAll;
+    ListView lvLike;
     BaiHatAdapter adapterAll;
+    BaiHatAdapter adapterLike;
     TabHost tabHost;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +39,42 @@ public class MainActivity extends AppCompatActivity {
         setUpTabHost();
         addControls();
         hienThiToanBo();
+        addEvents();
+    }
+    public static int selectedTab = 0;
+    private void addEvents() {
+        tabHost.setOnTabChangedListener(new TabHost.OnTabChangeListener() {
+            @Override
+            public void onTabChanged(String tabId) {
+                if(tabId.equals("tab1"))
+                {
+                    hienThiToanBo();
+                    selectedTab = 0;
+                }
+                else
+                {
+                    hienThiYeuThich();
+                    selectedTab = 1;
+                }
+            }
+        });
+    }
+
+    public void hienThiYeuThich() {
+        database = openOrCreateDatabase(DATABASE_NAME, MODE_PRIVATE, null);
+        Cursor c = database.query(TableName, null, "YEUTHICH=?", new String[]{"1"}, null, null, null, null);
+        adapterLike.clear();
+        while(c.moveToNext())
+        {
+            String ma = c.getString(0);
+            String ten = c.getString(1);
+            String casy = c.getString(3);
+            int thich = c.getInt(5);
+            BaiHat baiHat = new BaiHat(ma, ten, casy, thich);
+            adapterLike.add(baiHat);
+
+        }
+        c.close();
     }
 
     private void setUpTabHost() {
@@ -51,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
         tabHost.addTab(tab2);
     }
 
-    private void hienThiToanBo() {
+    public void hienThiToanBo() {
         database = openOrCreateDatabase(DATABASE_NAME, MODE_PRIVATE, null);
         Cursor c = database.query(TableName, null, null, null, null, null, null);
         adapterAll.clear();
@@ -72,6 +113,10 @@ public class MainActivity extends AppCompatActivity {
         lvAll = findViewById(R.id.lvAll);
         adapterAll = new BaiHatAdapter(MainActivity.this, R.layout.item);
         lvAll.setAdapter(adapterAll);
+
+        lvLike = findViewById(R.id.lvLove);
+        adapterLike = new BaiHatAdapter(MainActivity.this, R.layout.item);
+        lvLike.setAdapter(adapterLike);
     }
 
     //copy database
@@ -113,5 +158,43 @@ public class MainActivity extends AppCompatActivity {
         {
             Log.e("ERROR", ex.toString());
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+        MenuItem mnuSearch = menu.findItem(R.id.mnuSearch);
+        SearchView searchView = (SearchView) mnuSearch.getActionView();
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                xuLyTimKiem(newText);
+                return false;
+            }
+        });
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    private void xuLyTimKiem(String s) {
+        Cursor c = database.query(TableName, null, "MABH like ? or TENBH like ? or TACGIA like ?",
+                new String[]{"%" + s + "%", "%" + s + "%", "%" + s + "%"},
+                null, null, null);
+        adapterAll.clear();
+        while(c.moveToNext())
+        {
+            String ma = c.getString(0);
+            String ten = c.getString(1);
+            String casy = c.getString(3);
+            int thich = c.getInt(5);
+            BaiHat baiHat = new BaiHat(ma, ten, casy, thich);
+            adapterAll.add(baiHat);
+
+        }
+        c.close();
     }
 }
